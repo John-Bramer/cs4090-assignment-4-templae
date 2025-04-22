@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # File path for task storage
 DEFAULT_TASKS_FILE = "tasks.json"
@@ -63,18 +63,9 @@ def filter_tasks_by_priority(tasks, priority):
     """
     return [task for task in tasks if task.get("priority") == priority]
 
-def filter_tasks_by_category(tasks, category):
-    """
-    Filter tasks by category.
-    
-    Args:
-        tasks (list): List of task dictionaries
-        category (str): Category to filter by
-        
-    Returns:
-        list: Filtered list of tasks matching the category
-    """
-    return [task for task in tasks if task.get("category") == category]
+def filter_tasks_by_priority(tasks, priority):
+    """Filter tasks by priority level"""
+    return [task for task in tasks if task.get("priority") == priority]
 
 def filter_tasks_by_completion(tasks, completed=True):
     """
@@ -108,18 +99,101 @@ def search_tasks(tasks, query):
     ]
 
 def get_overdue_tasks(tasks):
-    """
-    Get tasks that are past their due date and not completed.
-    
-    Args:
-        tasks (list): List of task dictionaries
-        
-    Returns:
-        list: List of overdue tasks
-    """
+    """Get tasks that are past due date"""
     today = datetime.now().strftime("%Y-%m-%d")
     return [
-        task for task in tasks 
+        task for task in tasks
         if not task.get("completed", False) and 
            task.get("due_date", "") < today
     ]
+def get_due_soon_tasks(tasks, hours_threshold=24):
+    """
+    Get tasks that are due within the specified hours threshold (TDD Feature 1).
+    
+    Args:
+        tasks (list): List of task dictionaries
+        hours_threshold (int): Hours window to consider as "due soon"
+        
+    Returns:
+        list: Tasks due within the threshold
+    """
+    now = datetime.now()
+    due_soon = []
+    for task in tasks:
+        if not task.get("completed", False) and "due_date" in task:
+            try:
+                due_date = datetime.strptime(task["due_date"], "%Y-%m-%d")
+                hours_until_due = (due_date - now).total_seconds() / 3600
+                if 0 < hours_until_due <= hours_threshold:
+                    due_soon.append(task)
+            except ValueError:
+                continue
+    return due_soon
+
+def add_task_with_category(tasks, title, category, **kwargs):
+    """
+    Add a new task with custom category (TDD Feature 2).
+    
+    Args:
+        tasks (list): List of existing tasks
+        title (str): Task title
+        category (str): Task category
+        **kwargs: Additional task attributes
+        
+    Returns:
+        list: Updated list of tasks
+    """
+    new_task = {
+        "id": generate_unique_id(tasks),
+        "title": title,
+        "category": category,
+        "completed": False,
+        "due_date": (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d"),
+        "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    new_task.update(kwargs)
+    tasks.append(new_task)
+    save_tasks(tasks)
+    return tasks
+
+def bulk_complete_tasks(tasks, task_ids):
+    """
+    Mark multiple tasks as completed (TDD Feature 3).
+    
+    Args:
+        tasks (list): List of task dictionaries
+        task_ids (list): IDs of tasks to complete
+        
+    Returns:
+        list: Updated list of tasks
+    """
+    for task in tasks:
+        if task["id"] in task_ids:
+            task["completed"] = True
+    save_tasks(tasks)
+    return tasks
+
+def clear_tasks(file_path=DEFAULT_TASKS_FILE):
+    """Clear all tasks (for testing)"""
+    save_tasks([], file_path)
+
+def count_tasks(file_path=DEFAULT_TASKS_FILE):
+    """Count all tasks"""
+    return len(load_tasks(file_path))
+
+def get_task_by_title(title, file_path=DEFAULT_TASKS_FILE):
+    """Get task by title (for BDD assertions)"""
+    tasks = load_tasks(file_path)
+    return next((t for t in tasks if t["title"] == title), None)
+
+def filter_tasks_by_category(tasks, category):
+    """Filter tasks by category name
+    
+    Args:
+        tasks (list): List of task dictionaries
+        category (str): Category name to filter by
+        
+    Returns:
+        list: Filtered list of tasks
+    """
+    return [task for task in tasks if task.get("category") == category]

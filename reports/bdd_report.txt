@@ -1,0 +1,49 @@
+Feature: Task Management # features/task_management.feature:1
+  As a user
+  I want to manage my to-do tasks
+  So I can organize my work effectively
+  Background:   # features/task_management.feature:6
+
+  @add
+  Scenario: Add a new task with details          # features/task_management.feature:10
+    Given I start with an empty task list        # features/steps/task_steps.py:22
+    When I add a task "Buy milk" with            # features/steps/task_steps.py:62
+      | Field    | Value     |
+      | Priority | High      |
+      | Category | Groceries |
+      | Due Date | Tomorrow  |
+    Then I should see "Buy milk" in my tasks     # features/steps/task_steps.py:93
+    And it should have priority "High"           # features/steps/task_steps.py:98
+    And it should belong to category "Groceries" # features/steps/task_steps.py:103
+
+  @complete
+  Scenario: Mark a task as completed              # features/task_management.feature:21
+    Given I start with an empty task list         # features/steps/task_steps.py:22
+    Given I have a task "Write report" in my list # features/steps/task_steps.py:27
+    When I mark "Write report" as completed       # features/steps/task_steps.py:74
+    Then the task should show as completed        # features/steps/task_steps.py:108
+
+  @filter
+  Scenario: Filter tasks by priority      # features/task_management.feature:27
+    Given I start with an empty task list # features/steps/task_steps.py:22
+    Given I have these tasks              # features/steps/task_steps.py:39
+      | Title      | Priority |
+      | Urgent fix | High     |
+      | Read book  | Low      |
+    When I filter by "High" priority      # features/steps/task_steps.py:80
+    Then I should only see "Urgent fix"   # features/steps/task_steps.py:113
+
+  @delete
+  Scenario: Delete an existing task           # features/task_management.feature:36
+    Given I start with an empty task list     # features/steps/task_steps.py:22
+    Given I have a task "Old task" in my list # features/steps/task_steps.py:27
+    When I delete "Old task"                  # features/steps/task_steps.py:84
+    Then it should not appear in my tasks     # features/steps/task_steps.py:118
+
+  @overdue
+  Scenario: View overdue tasks                        # features/task_management.feature:42
+    Given I start with an empty task list             # features/steps/task_steps.py:22
+    Given I have a task "Pay bills" due yesterday     # features/steps/task_steps.py:51
+    When I view overdue tasks                         # features/steps/task_steps.py:89
+    Then I should see "Pay bills" in the overdue list # features/steps/task_steps.py:123
+
