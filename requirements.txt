@@ -5,3 +5,6 @@ pytest-cov
 pytest-html
 pytest-xdist
 pytest-bdd
+behave==1.2.6
+pytest==7.4.2
+pytest-bdd==6.1.1
